@@ -1,3 +1,6 @@
+using appstore.notification.api.Interfaces;
+using appstore.notification.api.Services;
+
 namespace appstore.notification.api
 {
     public class Program
@@ -7,7 +10,7 @@ namespace appstore.notification.api
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
+            builder.Services.AddSingleton<INotificationProcessor, NotificationProcessor>();
             builder.Services.AddControllers();
             builder.Services.AddSwaggerGen();
 
