@@ -36,21 +36,24 @@ namespace appstore.notification.api.Services
             // 
         }
 
-        private VerifiedDecodedDataModel<TNotificationData> GetVerifiedDecodedData<TNotificationData>(string token)
+        private VerifiedDecodedDataModel<TNotificationData> GetVerifiedDecodedData<TNotificationData>(string signedPayload)
         {
-            if (string.IsNullOrEmpty(token))
+            if (string.IsNullOrEmpty(signedPayload))
             {
                 throw new ArgumentNullException("Signed Payload is null");
             }
 
-            var splitParts = token.Split('.');
+            var splitParts = signedPayload.Split('.');
 
             EnsurePartElements(splitParts);
 
-            var valid = VerifyToken(token);
-            var jwsPayload = DecodeFromBase64<TNotificationData>(splitParts[1]);
+            var valid = VerifyToken(signedPayload);
 
-            return new VerifiedDecodedDataModel<TNotificationData> { ValidResult = jwsPayload, Valid = valid };
+            return new VerifiedDecodedDataModel<TNotificationData> 
+            {
+                ValidResult = valid ? DecodeFromBase64<TNotificationData>(splitParts[1]) : default,
+                Valid = valid
+            };
         }
 
         private static void EnsurePartElements(string[] split)
@@ -96,7 +99,8 @@ namespace appstore.notification.api.Services
                     throw new ArgumentNullException("Certeficates are null");
                 }
 
-                var securityToken = ValidateJWS(handler, token, certeficatesItems.First());
+                var securityToken = Validate(handler, token, certeficatesItems.First());
+
                 return securityToken != null;
 
             }
@@ -107,12 +111,12 @@ namespace appstore.notification.api.Services
             }
         }
 
-        private static SecurityToken? ValidateJWS(JwtSecurityTokenHandler tokenHandler, string jwtToken, string publicKey)
+        private static SecurityToken? Validate(JwtSecurityTokenHandler tokenHandler, string jwtToken, string publicKey)
         {
             var certificateBytes = Base64UrlEncoder.DecodeBytes(publicKey);
             var certificate = new X509Certificate2(certificateBytes);
             var eCDsa = certificate.GetECDsaPublicKey();
-
+            
             TokenValidationParameters tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateAudience = false,
