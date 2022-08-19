@@ -11,6 +11,13 @@ namespace appstore.notification.api.Services
 {
     public class NotificationProcessor : INotificationProcessor
     {
+        private readonly ISubsciptionService _subsciptionService;
+
+        public NotificationProcessor(ISubsciptionService subsciptionService)
+        {
+            _subsciptionService = subsciptionService;
+        }
+
         public void Process(AppleNotification notification)
         {
             var v2Payload = GetVerifiedDecodedData<NotificationV2>(notification.SignedPayload);
@@ -33,7 +40,8 @@ namespace appstore.notification.api.Services
 
             var transactionInfoV2 = GetVerifiedDecodedData<TransactionInfoV2>(v2Payload.ValidResult.Data.SignedTransactionInfo);
 
-            // 
+            // Update Internal subscription
+            _subsciptionService.Update(v2Payload.ValidResult, renewalInfoV2, transactionInfoV2);
         }
 
         private VerifiedDecodedDataModel<TNotificationData> GetVerifiedDecodedData<TNotificationData>(string signedPayload)

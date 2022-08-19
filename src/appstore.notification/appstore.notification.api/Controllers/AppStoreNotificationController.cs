@@ -26,7 +26,7 @@ namespace appstore.notification.api.Controllers
             }
             catch
             {
-                return NotFound();
+                return  StatusCode(500);
             }
         }
     }
