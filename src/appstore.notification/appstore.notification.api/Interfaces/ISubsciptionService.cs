@@ -4,6 +4,6 @@ namespace appstore.notification.api.Interfaces
 {
     public interface ISubsciptionService
     {
-        void Update(NotificationV2 validResult, RenewalInfoV2? renewalInfoV2, VerifiedDecodedDataModel<TransactionInfoV2> transactionInfoV2);
+        void Update(NotificationV2 decodedPayload, RenewalInfoV2? renewalInfo, TransactionInfoV2? transactionInfo);
     }
 }

@@ -20,28 +20,25 @@ namespace appstore.notification.api.Services
 
         public void Process(AppleNotification notification)
         {
-            var v2Payload = GetVerifiedDecodedData<NotificationV2>(notification.SignedPayload);
-            if (v2Payload == null)
+            var v2Notification = GetVerifiedDecodedData<NotificationV2>(notification.SignedPayload);
+            if (v2Notification?.DecodedPayload?.Data == null || !v2Notification.IsValid)
             {
-                throw new ArgumentNullException($"{nameof(v2Payload)} is null");
+                throw new ArgumentNullException($"{nameof(v2Notification.DecodedPayload.Data)} is null or is not valid");
             }
 
-            if (v2Payload.ValidResult?.Data == null)
+            RenewalInfoV2? renewalInfo = null;
+            if (!string.IsNullOrEmpty(v2Notification.DecodedPayload.Data.SignedRenewalInfo))
             {
-                throw new ArgumentNullException($"{nameof(v2Payload.ValidResult)} is null");
+                var renewalInfoV2Verified = GetVerifiedDecodedData<RenewalInfoV2>(v2Notification.DecodedPayload.Data.SignedRenewalInfo);
+                if(renewalInfoV2Verified.IsValid) renewalInfo = renewalInfoV2Verified.DecodedPayload;
             }
 
-            RenewalInfoV2 renewalInfoV2 = null;
-            if (!string.IsNullOrEmpty(v2Payload.ValidResult.Data.SignedRenewalInfo))
-            {
-                var renewalInfoV2Verified = GetVerifiedDecodedData<RenewalInfoV2>(v2Payload.ValidResult.Data.SignedRenewalInfo);
-                renewalInfoV2 = renewalInfoV2Verified.ValidResult;
-            }
-
-            var transactionInfoV2 = GetVerifiedDecodedData<TransactionInfoV2>(v2Payload.ValidResult.Data.SignedTransactionInfo);
-
+            var transactionInfoResponse = GetVerifiedDecodedData<TransactionInfoV2>(v2Notification.DecodedPayload.Data.SignedTransactionInfo);
+            TransactionInfoV2? transactionInfo = null;
+            if (transactionInfoResponse.IsValid) transactionInfo = transactionInfoResponse.DecodedPayload;
+            
             // Update Internal subscription
-            _subsciptionService.Update(v2Payload.ValidResult, renewalInfoV2, transactionInfoV2);
+            _subsciptionService.Update(v2Notification.DecodedPayload, renewalInfo, transactionInfo);
         }
 
         private VerifiedDecodedDataModel<TNotificationData> GetVerifiedDecodedData<TNotificationData>(string signedPayload)
@@ -51,16 +48,18 @@ namespace appstore.notification.api.Services
                 throw new ArgumentNullException("Signed Payload is null");
             }
 
-            var splitParts = signedPayload.Split('.');
+            var splitParts = signedPayload.Split('.'); // JWS header, payload, and signature representations
 
             EnsurePartElements(splitParts);
 
             var valid = VerifyToken(signedPayload);
+            
+            var payload = splitParts[1];
 
             return new VerifiedDecodedDataModel<TNotificationData> 
             {
-                ValidResult = valid ? DecodeFromBase64<TNotificationData>(splitParts[1]) : default,
-                Valid = valid
+                DecodedPayload = valid ? DecodeFromBase64<TNotificationData>(payload) : default,
+                IsValid = valid
             };
         }
 

@@ -11,6 +11,7 @@ namespace appstore.notification.api
 
             // Add services to the container.
             builder.Services.AddSingleton<INotificationProcessor, NotificationProcessor>();
+            builder.Services.AddSingleton<ISubsciptionService, SubsciptionService>();
             builder.Services.AddControllers();
             builder.Services.AddSwaggerGen();
 

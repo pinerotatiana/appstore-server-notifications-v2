@@ -5,7 +5,7 @@ namespace appstore.notification.api.Services
 {
     public class SubsciptionService : ISubsciptionService
     {
-        public void Update(NotificationV2 validResult, RenewalInfoV2? renewalInfoV2, VerifiedDecodedDataModel<TransactionInfoV2> transactionInfoV2)
+        public void Update(NotificationV2 decodedPayload, RenewalInfoV2? renewalInfo, TransactionInfoV2? transactionInfo)
         {
         }
     }

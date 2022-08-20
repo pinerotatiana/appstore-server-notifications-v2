@@ -2,7 +2,8 @@
 {
     public class VerifiedDecodedDataModel<TDataModel>
     {
-        public TDataModel ValidResult { get; set; }
-        public bool Valid { get; set; }
+        public TDataModel? DecodedPayload { get; set; }
+
+        public bool IsValid { get; set; }
     }
 }
